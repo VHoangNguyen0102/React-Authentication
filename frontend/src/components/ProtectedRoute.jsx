@@ -4,20 +4,20 @@ import { getAccessToken } from '../api/axios';
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   
-  // Simple check: do we have an access token in memory OR refreshToken in localStorage?
+  // Simple check: do we have an access token in memory?
+  // If not, the route will still render and useAuthStatus in the page will verify via cookie
   const hasAccessToken = !!getAccessToken();
-  const hasRefreshToken = !!localStorage.getItem('refreshToken');
   
-  console.log('[ProtectedRoute] Checking access:', { hasAccessToken, hasRefreshToken });
+  console.log('[ProtectedRoute] Checking access:', { hasAccessToken });
 
-  // If we have either token, allow access
-  // The useAuthStatus will handle the detailed verification
-  if (!hasAccessToken && !hasRefreshToken) {
-    console.log('[ProtectedRoute] No tokens found, redirecting to login');
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // If we have access token, allow access immediately
+  // If not, still allow (useAuthStatus will verify via cookie and redirect if needed)
+  if (hasAccessToken) {
+    console.log('[ProtectedRoute] Access token found, allowing access');
+  } else {
+    console.log('[ProtectedRoute] No access token in memory, but will check cookie...');
   }
 
-  console.log('[ProtectedRoute] Token found, allowing access');
   return children;
 };
 

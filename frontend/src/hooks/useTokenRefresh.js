@@ -25,7 +25,7 @@ export const useTokenRefresh = () => {
       console.error('[TokenRefresh] Failed to refresh token:', error);
       clearAccessToken();
       localStorage.removeItem('user');
-      localStorage.removeItem('refreshToken');
+      // Cookie will be handled by backend
       // Don't redirect - let the app handle it
     }
   }, []);

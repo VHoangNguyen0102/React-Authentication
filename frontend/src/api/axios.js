@@ -70,12 +70,8 @@ axiosInstance.interceptors.response.use(
       console.log('[Interceptor] 401 error detected, attempting token refresh...');
 
       try {
-        // Try to get refreshToken from localStorage first
-        const localRefreshToken = localStorage.getItem('refreshToken');
-        
         console.log('[Interceptor] Refreshing access token...');
-        const response = await axios.post(`${API_URL}/auth/refresh`, 
-          localRefreshToken ? { refreshToken: localRefreshToken } : {},
+        const response = await axios.post(`${API_URL}/auth/refresh`, {},
           {
             withCredentials: true, // Important: Send cookies with refresh request
           }
@@ -95,7 +91,7 @@ axiosInstance.interceptors.response.use(
         console.error('[Interceptor] Token refresh failed:', refreshError);
         clearAccessToken();
         localStorage.removeItem('user');
-        localStorage.removeItem('refreshToken');
+        // Cookie will be cleared by backend on next request
         // Don't redirect here - let ProtectedRoute handle it
         return Promise.reject(refreshError);
       }

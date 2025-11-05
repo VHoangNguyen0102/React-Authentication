@@ -57,20 +57,19 @@ router.post('/login', async (req, res) => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true, // Cannot be accessed by JavaScript
       secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // Lax for development
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-origin in production
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/', // Cookie available for all paths
     });
 
     console.log('[Login] Cookie set successfully for user:', user.email);
 
-    // Send response (also include refreshToken in body for now - fallback)
+    // Send response (refreshToken ONLY in cookie, NOT in body for security)
     res.json({
       success: true,
       message: 'Login successful',
       data: {
         accessToken,
-        refreshToken, // Include for fallback
         user: {
           id: user.id,
           email: user.email,
@@ -165,7 +164,7 @@ router.post('/logout', (req, res) => {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
     });
 

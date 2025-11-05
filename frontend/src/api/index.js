@@ -13,11 +13,8 @@ export const authAPI = {
   },
 
   refresh: async () => {
-    // Try cookie first, fall back to localStorage
-    const localRefreshToken = localStorage.getItem('refreshToken');
-    const response = await axiosInstance.post('/auth/refresh', 
-      localRefreshToken ? { refreshToken: localRefreshToken } : {}
-    );
+    // RefreshToken is in HTTP-only cookie, no need to send in body
+    const response = await axiosInstance.post('/auth/refresh');
     return response.data;
   },
 

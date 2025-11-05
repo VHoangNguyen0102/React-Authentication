@@ -13,25 +13,24 @@ export const useLogin = (options = {}) => {
       console.log('[Login] Login response received:', response);
       
       // The response structure is: response.data from authAPI.login
-      const { accessToken, refreshToken, user } = response.data;
+      const { accessToken, user } = response.data;
       
-      // Store access token in memory and user + refreshToken in localStorage
+      // Store access token in memory and user in localStorage
+      // refreshToken is automatically stored in HTTP-only cookie by backend
       setAccessToken(accessToken);
       localStorage.setItem('user', JSON.stringify(user));
       
-      // Store refreshToken as fallback (will use cookie primarily)
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
-        console.log('[Login] ✓ Stored refreshToken in localStorage as fallback');
-      }
+      console.log('[Login] ✓ Access token stored in memory');
+      console.log('[Login] ✓ User data stored in localStorage');
+      console.log('[Login] ✓ Refresh token stored in HTTP-only cookie (by backend)');
 
-      // Verify cookie was also set
+      // Verify cookie was set
       try {
         const checkResponse = await authAPI.checkAuth();
         if (checkResponse.data.hasRefreshToken) {
-          console.log('[Login] ✓ Refresh token cookie also set successfully');
+          console.log('[Login] ✓ Refresh token cookie verified');
         } else {
-          console.warn('[Login] ⚠ Cookie not set, but localStorage fallback available');
+          console.warn('[Login] ⚠ Cookie not detected (but should be set by backend)');
         }
       } catch (error) {
         console.error('[Login] Failed to verify cookie:', error);
@@ -66,7 +65,7 @@ export const useLogout = () => {
       // Clear tokens and user data
       clearAccessToken();
       localStorage.removeItem('user');
-      localStorage.removeItem('refreshToken');
+      // refreshToken cookie is cleared by backend
 
       // Clear all queries
       queryClient.clear();
@@ -77,7 +76,6 @@ export const useLogout = () => {
       // Even if logout fails on server, clear local data
       clearAccessToken();
       localStorage.removeItem('user');
-      localStorage.removeItem('refreshToken');
       queryClient.clear();
       
       console.error('Logout error:', error);

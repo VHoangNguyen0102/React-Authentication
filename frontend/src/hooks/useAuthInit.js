@@ -51,6 +51,7 @@ export const useAuthInit = () => {
         // Refresh token invalid/expired - clear everything
         clearAccessToken();
         localStorage.removeItem('user');
+        // Cookie will be cleared by backend
         setIsAuthenticated(false);
       } finally {
         if (isMounted) {

@@ -10,17 +10,12 @@ export const useAuthStatus = () => {
     
     const verifyUser = async () => {
       try {
-        // Check if refresh token exists (cookie or localStorage)
+        // Check if refresh token cookie exists
         console.log('[AuthStatus] Component mounted, checking auth status...');
         
-        // Check localStorage first (fallback)
-        const localRefreshToken = localStorage.getItem('refreshToken');
-        
-        // Check cookie
         const checkResponse = await authAPI.checkAuth();
         const hasCookie = checkResponse.data.hasRefreshToken;
         
-        console.log('[AuthStatus] Has localStorage token:', !!localRefreshToken);
         console.log('[AuthStatus] Has cookie token:', hasCookie);
         
         if (!isMounted) {
@@ -28,16 +23,16 @@ export const useAuthStatus = () => {
           return;
         }
         
-        if (!localRefreshToken && !hasCookie) {
-          console.log('[AuthStatus] No refresh token found anywhere - NOT LOGGED IN');
+        if (!hasCookie) {
+          console.log('[AuthStatus] No refresh token cookie found - NOT LOGGED IN');
           setIsLoggedIn(false);
           setIsCheckingStatus(false);
           return;
         }
 
-        // We have a token, verify by fetching profile
+        // We have a cookie, verify by fetching profile
         // The axios interceptor will handle token refresh if needed
-        console.log('[AuthStatus] Token found, verifying user via profile API...');
+        console.log('[AuthStatus] Cookie found, verifying user via profile API...');
         await userAPI.getProfile();
         
         if (!isMounted) {
@@ -55,8 +50,7 @@ export const useAuthStatus = () => {
         
         setIsLoggedIn(false);
         localStorage.removeItem('user');
-        localStorage.removeItem('refreshToken');
-        console.log('[AuthStatus] Cleared invalid tokens');
+        console.log('[AuthStatus] Cleared user data');
       } finally {
         if (isMounted) {
           setIsCheckingStatus(false);
