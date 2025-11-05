@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { authAPI } from '../api';
 import { setAccessToken, clearAccessToken } from '../api/axios';
 
 /**
  * Hook to initialize authentication on app startup
- * Attempts to refresh access token if refresh token exists
+ * Only checks if user was previously logged in
  */
 export const useAuthInit = () => {
   const [isInitializing, setIsInitializing] = useState(true);
@@ -15,7 +15,19 @@ export const useAuthInit = () => {
 
     const initAuth = async () => {
       try {
-        console.log('[AuthInit] Checking for refresh token in cookies...');
+        // Check if user data exists in localStorage
+        const userData = localStorage.getItem('user');
+        
+        if (!userData) {
+          console.log('[AuthInit] No user data found - not logged in');
+          if (isMounted) {
+            setIsAuthenticated(false);
+            setIsInitializing(false);
+          }
+          return;
+        }
+
+        console.log('[AuthInit] User data found, checking refresh token...');
         
         // Check if refresh token cookie exists
         const checkResponse = await authAPI.checkAuth();
@@ -23,35 +35,37 @@ export const useAuthInit = () => {
         if (!isMounted) return;
         
         if (!checkResponse.data.hasRefreshToken) {
-          console.log('[AuthInit] No refresh token found in cookies');
-          setIsInitializing(false);
+          console.log('[AuthInit] No refresh token cookie - session expired');
+          // Clear stale user data
+          localStorage.removeItem('user');
+          clearAccessToken();
           setIsAuthenticated(false);
+          setIsInitializing(false);
           return;
         }
 
-        console.log('[AuthInit] Attempting to refresh access token...');
+        console.log('[AuthInit] Refresh token found, getting new access token...');
         
-        // Try to get new access token using refresh token from cookie
+        // Get new access token using refresh token from cookie
         const response = await authAPI.refresh();
         
         if (!isMounted) return;
         
         const { accessToken } = response.data;
 
-        // Store new access token in memory
+        // Store access token in memory
         setAccessToken(accessToken);
         setIsAuthenticated(true);
         
-        console.log('[AuthInit] Access token refreshed successfully');
+        console.log('[AuthInit] ✓ Authentication restored successfully');
       } catch (error) {
         if (!isMounted) return;
         
-        console.error('[AuthInit] Failed to refresh token:', error);
+        console.error('[AuthInit] Failed to restore session:', error);
         
-        // Refresh token invalid/expired - clear everything
+        // Session invalid - clear everything
         clearAccessToken();
         localStorage.removeItem('user');
-        // Cookie will be cleared by backend
         setIsAuthenticated(false);
       } finally {
         if (isMounted) {
@@ -65,7 +79,7 @@ export const useAuthInit = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, []); // Empty dependency - only run once on mount
 
   return { isInitializing, isAuthenticated };
 };

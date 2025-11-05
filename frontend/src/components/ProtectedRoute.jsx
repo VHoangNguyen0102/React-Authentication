@@ -1,23 +1,33 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { getAccessToken } from '../api/axios';
 
+/**
+ * Protected route wrapper
+ * Redirects to login if no access token found
+ */
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   
-  // Simple check: do we have an access token in memory?
-  // If not, the route will still render and useAuthStatus in the page will verify via cookie
+  // Check if user data exists in localStorage
+  const userData = localStorage.getItem('user');
   const hasAccessToken = !!getAccessToken();
   
-  console.log('[ProtectedRoute] Checking access:', { hasAccessToken });
+  const isAuthenticated = !!userData && hasAccessToken;
+  
+  console.log('[ProtectedRoute]', {
+    path: location.pathname,
+    hasUserData: !!userData,
+    hasAccessToken,
+    isAuthenticated
+  });
 
-  // If we have access token, allow access immediately
-  // If not, still allow (useAuthStatus will verify via cookie and redirect if needed)
-  if (hasAccessToken) {
-    console.log('[ProtectedRoute] Access token found, allowing access');
-  } else {
-    console.log('[ProtectedRoute] No access token in memory, but will check cookie...');
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
+    console.log('[ProtectedRoute] Not authenticated, redirecting to login');
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  console.log('[ProtectedRoute] Authenticated, allowing access');
   return children;
 };
 

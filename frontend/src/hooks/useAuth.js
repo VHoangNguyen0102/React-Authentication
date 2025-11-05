@@ -56,12 +56,14 @@ export const useLogin = (options = {}) => {
 };
 
 // Logout mutation
-export const useLogout = () => {
+export const useLogout = (options = {}) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: authAPI.logout,
     onSuccess: () => {
+      console.log('[Logout] Logout successful');
+      
       // Clear tokens and user data
       clearAccessToken();
       localStorage.removeItem('user');
@@ -71,14 +73,26 @@ export const useLogout = () => {
       queryClient.clear();
       
       toast.success('Logged out successfully.');
+      
+      // Call the onSuccess callback from the component (for navigation)
+      if (options.onSuccess) {
+        options.onSuccess();
+      }
     },
     onError: (error) => {
+      console.error('[Logout] Logout error:', error);
+      
       // Even if logout fails on server, clear local data
       clearAccessToken();
       localStorage.removeItem('user');
       queryClient.clear();
       
-      console.error('Logout error:', error);
+      toast.success('Logged out successfully.');
+      
+      // Still navigate away even on error
+      if (options.onSuccess) {
+        options.onSuccess();
+      }
     },
   });
 };
